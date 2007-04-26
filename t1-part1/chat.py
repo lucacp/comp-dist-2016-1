@@ -6,15 +6,17 @@ import json
 
 servers = ["localhost:8080"]
 messages = [("Nobody", "Hello guys!")]
-nick = ["Nobody"]
+nick = 'Nobody'
 @get('/')
 @view('index')
 def index():
-    nick = request.query.nick
-    if nick:
-        return {'messages': messages,'nick': nick}
-    else:
-		return {'messages': messages,'nick': ''}
+    return {'messages': messages,'nick': nick}
+
+@get('/<nick>')
+@view('index')
+def index(nick):
+    return {'messages': messages,'nick': nick}
+
 @post('/send')
 def sendMessage():
 	global nick
@@ -23,7 +25,7 @@ def sendMessage():
 	if n is not in nick:
 		nick.append(n)
 	messages.append([n, m])
-	redirect('/?nick='+n)
+	redirect('/'+n)
 
 @get('/peers')
 def getPeers():
