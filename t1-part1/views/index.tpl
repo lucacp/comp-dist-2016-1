@@ -1,6 +1,6 @@
 <html>
 
-<head></head>
+<head><meta http-equiv="refresh" content="10;url=http://localhost:8080/" /></head>
 
 <body>
 
