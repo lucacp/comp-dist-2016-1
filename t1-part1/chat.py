@@ -1,21 +1,25 @@
-from bottle import run, get, post, view, request, redirect
+from bottle import run, get, post, view, request, redirect, response
 
 messages = [("Nobody", "Hello!")]
-nick = "Nobody"
 
 @get('/')
 @view('index')
 def index():
-    return {'messages': messages, 'nick': nick}
-
+    nick = request.get_cookie('nick')
+    if nick:
+        return {'messages': messages,'nick': nick}
+    else:
+	return {'messages': messages,'nick': ''}
 
 @post('/send')
 def sendMessage():
-    global nick
     m = request.forms.get('message')
-    n = request.forms.get('nick')
+    n = request.get_cookie('nick')
+    if not n:
+        n = request.forms.get('nick')
+        response.set_cookie('nick',n)
+    
     messages.append([n, m])
-    nick = n
     redirect('/')
 
 
