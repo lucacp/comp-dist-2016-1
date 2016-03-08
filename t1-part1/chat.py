@@ -1,6 +1,11 @@
 from bottle import run, get, post, view, request, redirect, response
+import threading
+import time
+import json
 
-messages = [("Nobody", "Hello!")]
+servers = ["localhost:8080"]
+
+messages = [("ADMIN", "Hello guys! feel free to talk about anything! XD")]
 
 @get('/')
 @view('index')
@@ -21,6 +26,7 @@ def sendMessage():
     
     messages.append([n, m])
     redirect('/')
+
 
 
 run(host='localhost', port=8080)

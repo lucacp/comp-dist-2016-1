@@ -1,7 +1,5 @@
 <html>
 
-<head><meta http-equiv="refresh" content="10;url=http://localhost:8080/" /></head>
-
 <body>
 
 <h1> T1.p1: Chat de texto </h1>
