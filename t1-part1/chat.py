@@ -1,36 +1,36 @@
-from bottle import run, get, post, view, request, redirect, response
+from bottle import run, get, post, view, request, redirect
 import thread
 import threading
 import time
 import json
 
 servers = ["localhost:8080"]
-
-messages = [("ADMIN", "Hello guys! feel free to talk about anything! XD")]
-
+messages = [("Nobody", "Hello guys!")]
+nick = "Nobody"
 @get('/')
 @view('index')
 def index():
-    nick = request.query('nick')
+    nick = request.query.nick
     if nick:
         return {'messages': messages,'nick': nick}
     else:
-	return {'messages': messages,'nick': ''}
-
+		return {'messages': messages,'nick': ''}
 @post('/send')
 def sendMessage():
-    m = request.forms.get('message')
-    n = request.query('nick')
-    if not n:
-        n = request.forms.get('nick')
-		response.query('nick',n)
-    messages.append([n, m])
-    redirect('/')
+	m=request.forms.get('message')
+	n=request.forms.get('nick')
+	messages.append([n, m])
+	redirect('/?nick='+n)
 
 @get('/peers')
 def getPeers():
-	global servers
-	redirect('/')
+	return servers
+
+@post('/peers/add')
+def addPeer():
+	s = request.forms.get('servers')
+	servers.append(s)
+	redirect('/?nick='+request.query.nick)
 	
-	
+
 threading.Thread(target=run,kwargs=dict(host='localhost', port=8080)).start()
