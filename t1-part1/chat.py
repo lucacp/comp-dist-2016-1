@@ -6,7 +6,7 @@ import json
 
 servers = ["localhost:8080"]
 messages = [("Nobody", "Hello guys!")]
-nick = "Nobody"
+nick = ["Nobody"]
 @get('/')
 @view('index')
 def index():
@@ -17,8 +17,11 @@ def index():
 		return {'messages': messages,'nick': ''}
 @post('/send')
 def sendMessage():
+	global nick
 	m=request.forms.get('message')
 	n=request.forms.get('nick')
+	if n is not in nick:
+		nick.append(n)
 	messages.append([n, m])
 	redirect('/?nick='+n)
 
