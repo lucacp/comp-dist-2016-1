@@ -3,7 +3,7 @@ import thread
 import threading
 import time
 import json
-
+nserver = 1
 servers = ["localhost:8080"]
 messages = [("Nobody", "Hello guys!")]
 nick = 'Nobody'
@@ -29,13 +29,17 @@ def sendMessage():
 
 @get('/peers')
 def getPeers():
+	global servers
 	return servers
 
 @post('/peers/add')
 def addPeer():
-	s = request.forms.get('servers')
-	servers.append(s)
-	redirect('/?nick='+request.query.nick)
+	global nserver
+	for i range (0,nserver)
+		s = request.(servers[i]+'/peers')
+		if s not in servers
+			servers.insert(s)
+	redirect('/')
 	
 
 threading.Thread(target=run,kwargs=dict(host='localhost', port=8080)).start()
