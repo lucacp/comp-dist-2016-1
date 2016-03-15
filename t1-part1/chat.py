@@ -3,7 +3,7 @@ import thread
 import threading
 import time
 import json
-nserver = 1
+nserver = 0
 servers = ["localhost:8080"]
 messages = [("Nobody", "Hello guys!")]
 nick = 'Nobody'
@@ -35,6 +35,7 @@ def getPeers():
 @post('/peers/add')
 def addPeer():
 	global nserver
+	global servers
 	for i range (0,nserver)
 		s = request.(servers[i]+'/peers')
 		if s not in servers
