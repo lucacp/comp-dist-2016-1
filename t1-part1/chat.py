@@ -41,19 +41,22 @@ def clientServ():
 			s = requests.get(i+'/peers')
 			ns = json.loads(s.content.decode("UTF-8"))
 			for j in ns:
-				if ns not in servers:
+				if j not in servers:
 					servers.append(j)
 
 def clientMsg():
 	while True:
+		time.sleep(10)
 		global messages
 		global servers
 		for i in servers:
 			time.sleep(5)
 			s = requests.get(i+'/peers/msg')
 			ns = json.loads(s.content.decode("UTF-8"))
-			if ns not in messages:
-				messages=ns
+			for j in ns:
+				if j not in messages:
+					messages.append(j)
+				
 				
 	
 threading.Thread(target=clientServ).start()
