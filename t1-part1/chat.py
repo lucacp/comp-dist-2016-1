@@ -32,7 +32,7 @@ def getPeers():
 def getPeers(server):
 	global servers
 	ad = str("http://"+server)
-	if server not in servers:
+	if ad not in servers:
 		servers.append(ad)
 	return json.dumps(servers)	
 		
@@ -49,7 +49,7 @@ def clientServ():
 			servers.append(ad)
 		print(servers)
 		for i in servers:
-			time.sleep(3)
+			time.sleep(5)
 			if i != ad:
 				requests.get(i+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
 				s = requests.get(i+'/peers')
@@ -63,11 +63,8 @@ def clientMsg():
 		time.sleep(2)
 		global messages
 		global servers
-		#if ip not in servers:
-		#	servers.append(ip)
-			
 		for i in servers:
-			time.sleep(4)
+			time.sleep(2)
 			ad = str("http://"+sys.argv[1]+":"+sys.argv[2])
 			if i != ad:
 				s = requests.get(i+'/peers/msg')
@@ -76,7 +73,56 @@ def clientMsg():
 					if j not in messages:
 						messages.append(j)
 						print(j)
-				
+
+def subkeys(k):
+    for i in range(len(k), 0, -1):
+        yield k[:i]
+    yield ""
+
+
+class DHT:
+    def __init__(self, k):
+        self.k = k
+        self.h = {}
+
+        for sk in subkeys(self.k):
+            self.h[sk] = None
+
+    def insert(self, k, v):
+        for sk in subkeys(k):
+            if sk in self.h:
+                if not self.h[sk]:
+                    self.h[sk] = (k, v)
+                    return sk
+        return None
+
+    def lookup(self, k):
+        print(list(subkeys(k)))
+        for sk in subkeys(k):
+            print(sk)
+            print(self.h)
+            if sk in self.h:
+                if self.h[sk]:
+                    (ki, vi) = self.h[sk]
+                    if ki == k:
+                        return vi
+        return None
+
+    def __repr__(self):
+        return "<<DHT:"+ repr(self.h) +">>"
+
+dht = DHT("abcd")
+
+@get('/dht/<key>')
+def dht_lookup(key):
+    global dht
+    return json.dumps(dht.lookup(key))
+
+@put('/dht/<key>/<value>')
+def dht_insert(key, value):
+    global dht
+    return json.dumps(dht.insert(key, value))
+
 	
 threading.Thread(target=clientServ).start()
 
