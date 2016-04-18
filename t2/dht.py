@@ -38,6 +38,7 @@ class DHT:
                 if self.h[sk]:
                     (ki, vi) = self.h[sk]
                     if ki == k:
+						
                         return vi
         return None
 

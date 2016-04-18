@@ -4,8 +4,10 @@ import time
 import json
 import requests
 import sys
+import hashlib
 servers = ["http://localhost:8080"]
-messages = [("Nobody", "Hello guys!")]
+messages = [("Nobody", "Hello guys!",0)]
+tempo = 0
 @get('/')
 @view('index')
 def index():
@@ -20,7 +22,7 @@ def index(nick):
 def sendMessage():
 	m=request.forms.get('message')
 	n=request.forms.get('nick')	
-	messages.append([n, m])
+	messages.append([n, m,tempo])
 	redirect('/'+n)
 
 @get('/peers')
@@ -45,17 +47,17 @@ def clientServ():
 	while True:
 		global servers
 		ad=str("http://"+sys.argv[1]+":"+sys.argv[2])
-		if ad not in servers:
-			servers.append(ad)
+		#if ad not in servers:
+		#	servers.append(ad)
 		print(servers)
 		for i in servers:
 			time.sleep(5)
-			if i != ad:
-				requests.get(i+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
-				s = requests.get(i+'/peers')
-				ns = json.loads(s.content.decode("UTF-8"))
-				for j in ns:
-					if j not in servers:
+			requests.get(i+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
+			s = requests.get(i+'/peers')
+			ns = json.loads(s.content.decode("UTF-8"))
+			for j in ns:
+				if j not in servers:
+					if len(servers) < 3:
 						servers.append(j)
 
 def clientMsg():
@@ -64,21 +66,22 @@ def clientMsg():
 		global messages
 		global servers
 		for i in servers:
-			time.sleep(2)
+			tempo+=1
+			time.sleep(1)
 			ad = str("http://"+sys.argv[1]+":"+sys.argv[2])
 			if i != ad:
 				s = requests.get(i+'/peers/msg')
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
-					if j not in messages:
-						messages.append(j)
-						print(j)
+					if j[2] >= tempo:
+						if j not in messages:
+							messages.append(j)
+							print(j)
 
 def subkeys(k):
     for i in range(len(k), 0, -1):
         yield k[:i]
     yield ""
-
 
 class DHT:
     def __init__(self, k):
@@ -116,12 +119,12 @@ dht = DHT("abcd")
 @get('/dht/<key>')
 def dht_lookup(key):
     global dht
-    return json.dumps(dht.lookup(key))
+    return json.dumps(dht.lookup(dht,key))
 
 @put('/dht/<key>/<value>')
 def dht_insert(key, value):
     global dht
-    return json.dumps(dht.insert(key, value))
+    return json.dumps(dht.insert(dht,key, value))
 
 	
 threading.Thread(target=clientServ).start()
@@ -129,5 +132,3 @@ threading.Thread(target=clientServ).start()
 threading.Thread(target=clientMsg).start()
 	
 threading.Thread(target=run,kwargs=dict(host=str(sys.argv[1]), port=str(sys.argv[2]))).start()
-
-
