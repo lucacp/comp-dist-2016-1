@@ -5,8 +5,8 @@ import json
 import requests
 import sys
 import hashlib
-servers = ["http://localhost:8080"]
-messages = [("Nobody", "Hello guys!",0)]
+servers = [("localhost","8080")]
+messages = [("Nobody", "Hello guys!", 0)]
 tempo = 0
 @get('/')
 @view('index')
@@ -20,9 +20,10 @@ def index(nick):
 
 @post('/send')
 def sendMessage():
+	global tempo
 	m=request.forms.get('message')
 	n=request.forms.get('nick')	
-	messages.append([n, m,tempo])
+	messages.append([n, m, ++tempo])
 	redirect('/'+n)
 
 @get('/peers')
@@ -33,9 +34,10 @@ def getPeers():
 @get('/peers/add/<server>')
 def getPeers(server):
 	global servers
-	ad = str("http://"+server)
+	ad = server.split(':')
 	if ad not in servers:
-		servers.append(ad)
+		if len(servers) < 3:
+			servers.append(ad)
 	return json.dumps(servers)	
 		
 @get('/peers/msg')
@@ -46,31 +48,33 @@ def getMsg():
 def clientServ():
 	while True:
 		global servers
-		ad=str("http://"+sys.argv[1]+":"+sys.argv[2])
+		ad=[str(sys.argv[1]),str(sys.argv[2])]
 		#if ad not in servers:
 		#	servers.append(ad)
-		print(servers)
+		#print(ad)
 		for i in servers:
 			time.sleep(5)
-			requests.get(i+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
-			s = requests.get(i+'/peers')
-			ns = json.loads(s.content.decode("UTF-8"))
-			for j in ns:
-				if j not in servers:
-					if len(servers) < 3:
-						servers.append(j)
+			if i[0] != ad[0] and i[1] != ad[1]:
+				requests.get("http://"+i[0]+":"+i[1]+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
+				s = requests.get("http://"+i[0]+":"+i[1]+'/peers')
+				ns = json.loads(s.content.decode("UTF-8"))
+				for j in ns:
+					if j not in servers:
+						if len(servers) < 3:
+							servers.append(j)
 
 def clientMsg():
 	while True:
 		time.sleep(2)
 		global messages
 		global servers
+		global tempo
 		for i in servers:
 			tempo+=1
 			time.sleep(1)
-			ad = str("http://"+sys.argv[1]+":"+sys.argv[2])
+			ad=[str(sys.argv[1]),str(sys.argv[2])]
 			if i != ad:
-				s = requests.get(i+'/peers/msg')
+				s = requests.get("http://"+i[0]+':'+i[1]+'/peers/msg')
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
 					if j[2] >= tempo:
