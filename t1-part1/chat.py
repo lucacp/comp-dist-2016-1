@@ -44,6 +44,11 @@ def getPeers(server):
 def getMsg():
 	global messages
 	return json.dumps(messages)
+
+@get('/time')
+def getTime():
+	global tempo
+	return tempo
 	
 def clientServ():
 	while True:
@@ -70,10 +75,12 @@ def clientMsg():
 		global servers
 		global tempo
 		for i in servers:
-			tempo+=1
 			time.sleep(1)
 			ad=[str(sys.argv[1]),str(sys.argv[2])]
 			if i != ad:
+				temporal = requests.get("http://"+i[0]+':'+i[1]+'/time')
+				if temporal > tempo:
+					tempo = temporal
 				s = requests.get("http://"+i[0]+':'+i[1]+'/peers/msg')
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
