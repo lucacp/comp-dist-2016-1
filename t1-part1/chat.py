@@ -76,7 +76,6 @@ def getPeers(server):
 	global servers
 	ad = server.split(':')
 	if ad not in servers:
-		print("aqui estou" + ad)
 		if len(servers) < 6:
 			servers.append(ad)
 	return json.dumps(servers)	
@@ -86,7 +85,7 @@ def getMsg():
 	global messages
 	return json.dumps(messages)
 
-@get('/time')
+@get('/peers/time')
 def getTime():
 	global tempo
 	return tempo
@@ -118,10 +117,10 @@ def clientMsg():
 			time.sleep(1)
 			ad=[str(sys.argv[1]),str(sys.argv[2])]
 			if i[0] != ad[0] or i[1] != ad[1]:
-				temporal = requests.get("http://"+i[0]+':'+i[1]+'/time')
-				if not temporal is None:
-					if temporal > tempo:
-						tempo = temporal + 1
+				aux = requests.get("http://"+i[0]+':'+i[1]+'/peers/time')
+				if not aux is None:
+					if int(aux) > tempo:
+						tempo = int(aux) + 1
 				s = requests.get("http://"+i[0]+':'+i[1]+'/peers/msg')
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
