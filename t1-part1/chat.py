@@ -79,14 +79,15 @@ def clientMsg():
 			ad=[str(sys.argv[1]),str(sys.argv[2])]
 			if i != ad:
 				temporal = requests.get("http://"+i[0]+':'+i[1]+'/time')
-				if temporal > tempo:
-					tempo = temporal
+				if not temporal is None:	
+					if temporal > tempo:
+						tempo = temporal + 1
 				s = requests.get("http://"+i[0]+':'+i[1]+'/peers/msg')
-				ns = json.loads(s.content.decode("UTF-8"))
-				for j in ns:
-					if j[2] >= tempo:
+				if s is not None:
+					ns = json.loads(s.content.decode("UTF-8"))
+					for j in ns:
 						if j not in messages:
-							messages.append(j)
+							messages.insert(j[2]-1,j)
 							print(j)
 
 def subkeys(k):
