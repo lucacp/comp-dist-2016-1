@@ -5,90 +5,10 @@ import json
 import requests
 import sys
 import hashlib
+
 servers = [("localhost","8080")]
 messages = [("Nobody", "Hello guys!", 0)]
 tempo = 0
-@get('/')
-@view('index')
-def index():
-    return {'messages': messages,'nick': ''}
-
-@get('/<nick>')
-@view('index')
-def index(nick):
-	return {'messages': messages,'nick': nick}
-
-@post('/send')
-def sendMessage():
-	global tempo
-	m=request.forms.get('message')
-	n=request.forms.get('nick')	
-	messages.append([n, m, ++tempo])
-	redirect('/'+n)
-
-@get('/peers')
-def getPeers():
-	global servers
-	return json.dumps(servers)	
-
-@get('/peers/add/<server>')
-def getPeers(server):
-	global servers
-	ad = server.split(':')
-	if ad not in servers:
-		if len(servers) < 3:
-			servers.append(ad)
-	return json.dumps(servers)	
-		
-@get('/peers/msg')
-def getMsg():
-	global messages
-	return json.dumps(messages)
-
-@get('/time')
-def getTime():
-	global tempo
-	return tempo
-	
-def clientServ():
-	while True:
-		global servers
-		ad=[str(sys.argv[1]),str(sys.argv[2])]
-		#if ad not in servers:
-		#	servers.append(ad)
-		#print(ad)
-		for i in servers:
-			time.sleep(5)
-			if i[0] != ad[0] and i[1] != ad[1]:
-				requests.get("http://"+i[0]+":"+i[1]+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
-				s = requests.get("http://"+i[0]+":"+i[1]+'/peers')
-				ns = json.loads(s.content.decode("UTF-8"))
-				for j in ns:
-					if j not in servers:
-						if len(servers) < 3:
-							servers.append(j)
-
-def clientMsg():
-	while True:
-		time.sleep(2)
-		global messages
-		global servers
-		global tempo
-		for i in servers:
-			time.sleep(1)
-			ad=[str(sys.argv[1]),str(sys.argv[2])]
-			if i[0] != ad[0] and i[1] != ad[1]:
-				temporal = requests.get("http://"+i[0]+':'+i[1]+'/time')
-				if not temporal is None:	
-					if temporal > tempo:
-						tempo = temporal + 1
-				s = requests.get("http://"+i[0]+':'+i[1]+'/peers/msg')
-				if s is not None:
-					ns = json.loads(s.content.decode("UTF-8"))
-					for j in ns:
-						if j not in messages:
-							messages.insert(j[2]-1,j)
-							print(j)
 
 def subkeys(k):
     for i in range(len(k), 0, -1):
@@ -128,16 +48,96 @@ class DHT:
 
 dht = DHT("abcd")
 
+@get('/')
+@view('index')
+def index():
+    return {'messages': messages,'nick': '','time':0}
+
+@get('/<nick>')
+@view('index')
+def index(nick):
+	return {'messages': messages,'nick': nick,'time':0}
+
+@post('/send')
+def sendMessage():
+	global tempo
+	m=request.forms.get('message')
+	n=request.forms.get('nick')	
+	messages.append([n, m, ++tempo])
+	redirect('/'+n)
+
+@get('/peers')
+def getPeers():
+	global servers
+	return json.dumps(servers)	
+
+@get('/peers/add/<server>')
+def getPeers(server):
+	global servers
+	ad = server.split(':')
+	if ad not in servers:
+		print("aqui estou" + ad)
+		if len(servers) < 6:
+			servers.append(ad)
+	return json.dumps(servers)	
+		
+@get('/peers/msg')
+def getMsg():
+	global messages
+	return json.dumps(messages)
+
+@get('/time')
+def getTime():
+	global tempo
+	return tempo
+	
+def clientServ():
+	while True:
+		global servers
+		ad=[str(sys.argv[1]),str(sys.argv[2])]
+		if ad not in servers:
+			servers.insert(0,ad)
+		#print(ad)
+		for i in servers:
+			time.sleep(5)
+			if i[0] != ad[0] or i[1] != ad[1]:
+				requests.get("http://"+i[0]+":"+i[1]+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
+				s = requests.get("http://"+i[0]+":"+i[1]+'/peers')
+				ns = json.loads(s.content.decode("UTF-8"))
+				for j in ns:
+					if j not in servers:
+						if len(servers) < 3:
+							servers.append(j)
+
+def clientMsg():
+	while True:
+		global messages
+		global servers
+		global tempo
+		for i in servers:
+			time.sleep(1)
+			ad=[str(sys.argv[1]),str(sys.argv[2])]
+			if i[0] != ad[0] or i[1] != ad[1]:
+				temporal = requests.get("http://"+i[0]+':'+i[1]+'/time')
+				if not temporal is None:
+					if temporal > tempo:
+						tempo = temporal + 1
+				s = requests.get("http://"+i[0]+':'+i[1]+'/peers/msg')
+				ns = json.loads(s.content.decode("UTF-8"))
+				for j in ns:
+					if j not in messages:
+						messages.insert(j[2]-1,j)
+						print(j)
+
 @get('/dht/<key>')
 def dht_lookup(key):
     global dht
-    return json.dumps(dht.lookup(dht,key))
+    return json.dumps(dht.lookup(key))
 
 @put('/dht/<key>/<value>')
 def dht_insert(key, value):
     global dht
-    return json.dumps(dht.insert(dht,key, value))
-
+    return json.dumps(dht.insert(key, value))
 	
 threading.Thread(target=clientServ).start()
 
