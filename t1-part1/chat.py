@@ -77,7 +77,7 @@ def clientMsg():
 		for i in servers:
 			time.sleep(1)
 			ad=[str(sys.argv[1]),str(sys.argv[2])]
-			if i != ad:
+			if i[0] != ad[0] and i[1] != ad[1]:
 				temporal = requests.get("http://"+i[0]+':'+i[1]+'/time')
 				if not temporal is None:	
 					if temporal > tempo:
