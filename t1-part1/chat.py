@@ -45,8 +45,12 @@ class DHT:
 
     def __repr__(self):
         return "<<DHT:"+ repr(self.h) +">>"
+def hashFunc(h):
+	d = hashlib.md5()
+	d.update(h.encode('utf-8'))
+	return d.hexdigest()
 
-dht = DHT("abcd")
+dht = DHT(hashFunc(str(sys.argv[1])+str(sys.argv[2])))
 
 @get('/')
 @view('index')
@@ -88,7 +92,7 @@ def getMsg():
 @get('/peers/time')
 def getTime():
 	global tempo
-	return tempo
+	return json.dumps(tempo)
 	
 def clientServ():
 	while True:
@@ -115,18 +119,25 @@ def clientMsg():
 		global tempo
 		for i in servers:
 			time.sleep(1)
+			tempo+=1
 			ad=[str(sys.argv[1]),str(sys.argv[2])]
 			if i[0] != ad[0] or i[1] != ad[1]:
 				aux = requests.get("http://"+i[0]+':'+i[1]+'/peers/time')
-				if not aux is None:
-					if int(aux) > tempo:
-						tempo = int(aux) + 1
+				if aux or None:
+					au = json.loads(aux.content.decode("UTF-8"))
+					if au > tempo:
+						tempo = au + 1
+						flag = True
 				s = requests.get("http://"+i[0]+':'+i[1]+'/peers/msg')
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
 					if j not in messages:
-						messages.insert(j[2]-1,j)
-						print(j)
+						if j[2] != 0:
+							if flag:
+								messages.insert(j[2]-2,j)
+							else:
+								messages.insert(j[2]-1,j)
+							print(j)
 
 @get('/dht/<key>')
 def dht_lookup(key):
