@@ -120,6 +120,7 @@ def clientMsg():
 		for i in servers:
 			time.sleep(1)
 			tempo+=1
+			flag = None
 			ad=[str(sys.argv[1]),str(sys.argv[2])]
 			if i[0] != ad[0] or i[1] != ad[1]:
 				aux = requests.get("http://"+i[0]+':'+i[1]+'/peers/time')
