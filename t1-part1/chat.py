@@ -7,7 +7,7 @@ import sys
 import hashlib
 
 servers = [("localhost","8080")]
-messages = [("Nobody", "Hello guys!", 0, 0)]
+messages = [("Nobody", "Hello guys!", 0)]
 tempo = 0
 cont = 0
 
@@ -46,6 +46,7 @@ class DHT:
 
     def __repr__(self):
         return "<<DHT:"+ repr(self.h) +">>"
+	
 def hashFunc(h):
 	d = hashlib.md5()
 	d.update(h.encode('utf-8'))
@@ -56,12 +57,12 @@ dht = DHT(hashFunc(str(sys.argv[1])+str(sys.argv[2])))
 @get('/')
 @view('index')
 def index():
-    return {'messages': messages,'nick': '','time':0,'cont':0}
+    return {'messages': messages,'nick': '','time':0}
 
 @get('/<nick>')
 @view('index')
 def index(nick):
-	return {'messages': messages,'nick': nick,'time':0,'cont':0}
+	return {'messages': messages,'nick': nick,'time':0}
 
 @post('/send')
 def sendMessage():
@@ -126,7 +127,7 @@ def clientMsg():
 				if aux or None:
 					au = json.loads(aux.content.decode("UTF-8"))
 					if au > tempo:
-						tempo = au + 1
+						tempo = au
 						flag = True
 				s = requests.get("http://"+i[0]+':'+i[1]+'/peers/msg')
 				ns = json.loads(s.content.decode("UTF-8"))
