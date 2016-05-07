@@ -7,8 +7,9 @@ import sys
 import hashlib
 
 servers = [("localhost","8080")]
-messages = [("Nobody", "Hello guys!", 0)]
+messages = [("Nobody", "Hello guys!", 0, 0)]
 tempo = 0
+cont = 0
 
 def subkeys(k):
     for i in range(len(k), 0, -1):
@@ -55,12 +56,12 @@ dht = DHT(hashFunc(str(sys.argv[1])+str(sys.argv[2])))
 @get('/')
 @view('index')
 def index():
-    return {'messages': messages,'nick': '','time':0}
+    return {'messages': messages,'nick': '','time':0,'cont':0}
 
 @get('/<nick>')
 @view('index')
 def index(nick):
-	return {'messages': messages,'nick': nick,'time':0}
+	return {'messages': messages,'nick': nick,'time':0,'cont':0}
 
 @post('/send')
 def sendMessage():
@@ -116,10 +117,8 @@ def clientMsg():
 	while True:
 		global messages
 		global servers
-		global tempo
 		for i in servers:
 			time.sleep(1)
-			tempo+=1
 			flag = None
 			ad=[str(sys.argv[1]),str(sys.argv[2])]
 			if i[0] != ad[0] or i[1] != ad[1]:
