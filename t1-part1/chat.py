@@ -52,7 +52,7 @@ def hashFunc(h):
 	d.update(h.encode('utf-8'))
 	return d.hexdigest()
 
-dht = DHT(hashFunc(str(sys.argv[1])+str(sys.argv[2])))
+dht = DHT(int(hashFunc(str(sys.argv[1])+str(sys.argv[2])),16)>>31)
 
 @get('/')
 @view('index')
