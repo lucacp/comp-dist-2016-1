@@ -50,9 +50,11 @@ class DHT:
 def hashFunc(h):
 	d = hashlib.md5()
 	d.update(h.encode('utf-8'))
-	return d.hexdigest()
+	i = int(d.hexdigest(),16)
+	i = i % 2
+	return str(i)
 
-dht = DHT(int(hashFunc(str(sys.argv[1])+str(sys.argv[2])),16)>>31)
+dht = DHT(hashFunc(str(sys.argv[1])+str(sys.argv[2])))
 
 @get('/')
 @view('index')
@@ -106,8 +108,15 @@ def clientServ():
 		for i in servers:
 			time.sleep(5)
 			if i[0] != ad[0] or i[1] != ad[1]:
-				requests.get("http://"+i[0]+":"+i[1]+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
-				s = requests.get("http://"+i[0]+":"+i[1]+'/peers')
+				try:
+					requests.get("http://"+i[0]+":"+i[1]+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
+				except requests.exceptions.RequestException as e:
+					print("Connect_Error "+"http://"+i[0]+":"+i[1])
+				try:
+					s = requests.get("http://"+i[0]+":"+i[1]+'/peers')
+				except requests.exceptions.RequestException as e:
+					print("Connect_Error "+"http://"+i[0]+":"+i[1])
+					continue
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
 					if j not in servers:
@@ -118,18 +127,26 @@ def clientMsg():
 	while True:
 		global messages
 		global servers
+		global tempo
 		for i in servers:
 			time.sleep(1)
 			flag = None
 			ad=[str(sys.argv[1]),str(sys.argv[2])]
 			if i[0] != ad[0] or i[1] != ad[1]:
-				aux = requests.get("http://"+i[0]+':'+i[1]+'/peers/time')
-				if aux or None:
-					au = json.loads(aux.content.decode("UTF-8"))
-					if au > tempo:
-						tempo = au
-						flag = True
-				s = requests.get("http://"+i[0]+':'+i[1]+'/peers/msg')
+				try:
+					aux = requests.get("http://"+i[0]+':'+i[1]+'/peers/time')
+				except requests.exceptions.RequestException as e:
+					print("Connect_Error "+"http://"+i[0]+":"+i[1])
+					continue
+				au = json.loads(aux.content.decode("UTF-8"))
+				if au > tempo:
+					tempo = au
+					flag = True
+				try:
+					s = requests.get("http://"+i[0]+':'+i[1]+'/peers/msg')
+				except requests.exceptions.RequestException as e:
+					print("Connect_Error "+"http://"+i[0]+":"+i[1])
+					continue
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
 					if j not in messages:
