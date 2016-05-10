@@ -26,6 +26,7 @@ class DHT:
 
     def insert(self, k, v):
         for sk in subkeys(k):
+            print("sk: "+sk)
             if sk in self.h:
                 if not self.h[sk]:
                     self.h[sk] = (k, v)
@@ -48,13 +49,20 @@ class DHT:
         return "<<DHT:"+ repr(self.h) +">>"
 	
 def hashFunc(h):
+	print("in: "+h)
 	d = hashlib.md5()
 	d.update(h.encode('utf-8'))
+	print("hex.hash: "+d.hexdigest())
 	i = int(d.hexdigest(),16)
-	i = i % 2
-	return str(i)
+	print("int.hash: "+str(i))
+	j = str(i)
+	l=""
+	for k in range(0,len(j)):
+		l += str(int(j[k])%2)
+	print("out: "+l)
+	return l
 
-dht = DHT(hashFunc(str(sys.argv[1])+str(sys.argv[2])))
+dht = DHT(hashFunc(str(sys.argv[1])+":"+str(sys.argv[2])))
 
 @get('/')
 @view('index')
@@ -106,7 +114,7 @@ def clientServ():
 			servers.insert(0,ad)
 		#print(ad)
 		for i in servers:
-			time.sleep(5)
+			time.sleep(3)
 			if i[0] != ad[0] or i[1] != ad[1]:
 				try:
 					requests.get("http://"+i[0]+":"+i[1]+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
@@ -160,12 +168,12 @@ def clientMsg():
 @get('/dht/<key>')
 def dht_lookup(key):
     global dht
-    return json.dumps(dht.lookup(key))
+    return json.dumps(dht.lookup(hashFunc(key)))
 
 @put('/dht/<key>/<value>')
 def dht_insert(key, value):
     global dht
-    return json.dumps(dht.insert(key, value))
+    return json.dumps(dht.insert(hashFunc(key), value))
 	
 threading.Thread(target=clientServ).start()
 
