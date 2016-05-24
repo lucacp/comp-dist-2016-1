@@ -9,7 +9,6 @@ import hashlib
 servers = [("localhost","8080")]
 messages = [("Nobody", "Hello guys!", 0)]
 tempo = 0
-cont = 0
 
 def subkeys(k):
     for i in range(len(k), 0, -1):
@@ -67,19 +66,22 @@ dht = DHT(hashFunc(str(sys.argv[1])+":"+str(sys.argv[2])))
 @get('/')
 @view('index')
 def index():
-    return {'messages': messages,'nick': '','time':0}
+    global tempo
+    return {'messages': messages,'nick': '','time':tempo}
 
 @get('/<nick>')
 @view('index')
 def index(nick):
-	return {'messages': messages,'nick': nick,'time':0}
+	global tempo
+	return {'messages': messages,'nick': nick,'time':tempo}
 
 @post('/send')
 def sendMessage():
 	global tempo
+	tempo+=1
 	m=request.forms.get('message')
 	n=request.forms.get('nick')	
-	messages.append([n, m, ++tempo])
+	messages.append([n, m, tempo])
 	redirect('/'+n)
 
 @get('/peers')
@@ -128,7 +130,7 @@ def clientServ():
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
 					if j not in servers:
-						if len(servers) < 3:
+						if len(servers) < 6:
 							servers.append(j)
 
 def clientMsg():
@@ -145,6 +147,7 @@ def clientMsg():
 					aux = requests.get("http://"+i[0]+':'+i[1]+'/peers/time')
 				except requests.exceptions.RequestException as e:
 					print("Connect_Error "+"http://"+i[0]+":"+i[1])
+					time.sleep(2)
 					continue
 				au = json.loads(aux.content.decode("UTF-8"))
 				if au > tempo:
@@ -157,13 +160,12 @@ def clientMsg():
 					continue
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
-					if j not in messages:
-						if j[2] != 0:
-							if flag:
-								messages.insert(j[2]-2,j)
-							else:
-								messages.insert(j[2]-1,j)
-							print(j)
+					if j not in messages and j[2]!=0:
+						if flag:
+							messages.insert(j[2],j)
+						else:
+							messages.append(j)
+						print(j)
 
 @get('/dht/<key>')
 def dht_lookup(key):
