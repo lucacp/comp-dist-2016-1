@@ -92,11 +92,12 @@ def getPeers():
 @get('/peers/add/<server>')
 def getPeers(server):
 	global servers
-	ad = server.split(':')
-	if ad not in servers:
+	flag=None
+	if serrver not in servers:
 		if len(servers) < 6:
-			servers.append(ad)
-	return json.dumps(servers)	
+			servers.append(server)
+			flag=True
+	return json.dumps(flag)
 		
 @get('/peers/msg')
 def getMsg():
