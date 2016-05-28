@@ -6,7 +6,7 @@ import requests
 import sys
 import hashlib
 
-servers = [("localhost","8080")]
+servers = [("localhost:8080")]
 messages = [("Nobody", "Hello guys!", 0)]
 tempo = 0
 
@@ -111,21 +111,21 @@ def getTime():
 def clientServ():
 	while True:
 		global servers
-		ad=[str(sys.argv[1]),str(sys.argv[2])]
+		ad=str(sys.argv[1])+":"+str(sys.argv[2])
 		if ad not in servers:
 			servers.insert(0,ad)
 		#print(ad)
 		for i in servers:
 			time.sleep(3)
-			if i[0] != ad[0] or i[1] != ad[1]:
+			if i != ad:
 				try:
-					requests.get("http://"+i[0]+":"+i[1]+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
+					requests.get("http://"+i+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
 				except requests.exceptions.RequestException as e:
-					print("Connect_Error "+"http://"+i[0]+":"+i[1])
+					print("Connect_Error "+"http://"+i)
 				try:
-					s = requests.get("http://"+i[0]+":"+i[1]+'/peers')
+					s = requests.get("http://"+i+'/peers')
 				except requests.exceptions.RequestException as e:
-					print("Connect_Error "+"http://"+i[0]+":"+i[1])
+					print("Connect_Error "+"http://"+i)
 					continue
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
@@ -141,22 +141,21 @@ def clientMsg():
 		for i in servers:
 			time.sleep(1)
 			flag = None
-			ad=[str(sys.argv[1]),str(sys.argv[2])]
+			ad=str(sys.argv[1])+":"+str(sys.argv[2])
 			if i[0] != ad[0] or i[1] != ad[1]:
 				try:
-					aux = requests.get("http://"+i[0]+':'+i[1]+'/peers/time')
+					aux = requests.get("http://"+i+'/peers/time')
 				except requests.exceptions.RequestException as e:
-					print("Connect_Error "+"http://"+i[0]+":"+i[1])
-					time.sleep(2)
+					print("Connect_Error "+"http://"+i)
 					continue
 				au = json.loads(aux.content.decode("UTF-8"))
 				if au > tempo:
 					tempo = au
 					flag = True
 				try:
-					s = requests.get("http://"+i[0]+':'+i[1]+'/peers/msg')
+					s = requests.get("http://"+i+'/peers/msg')
 				except requests.exceptions.RequestException as e:
-					print("Connect_Error "+"http://"+i[0]+":"+i[1])
+					print("Connect_Error "+"http://"+i)
 					continue
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
