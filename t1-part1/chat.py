@@ -25,13 +25,18 @@ class DHT:
 
     def insert(self, k, v):
         for sk in subkeys(k):
-            print("sk: "+sk)
             if sk in self.h:
                 if not self.h[sk]:
                     self.h[sk] = (k, v)
                     return sk
-        return None
-
+                else:
+					(k0, v0)=self.h[sk]
+					try:
+						r = requests.put("http://"+v0+"/dht/"+k+"/"+v)
+					except requests.exceptions.RequestException as e:
+						print("DHT_Error:_'"+"http://"+v0+"/dht/"+k+"/"+v+"'")
+					return v0
+					
     def lookup(self, k):
         print(list(subkeys(k)))
         for sk in subkeys(k):
