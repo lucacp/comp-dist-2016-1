@@ -23,19 +23,25 @@ class DHT:
         for sk in subkeys(self.k):
             self.h[sk] = None
 
-    def insert(self, k, v):
+    def insert(self, k, v,n):
         for sk in subkeys(k):
+            print(self.h)
             if sk in self.h:
                 if not self.h[sk]:
                     self.h[sk] = (k, v)
                     return sk
                 else:
-					(k0, v0)=self.h[sk]
-					try:
-						r = requests.put("http://"+v0+"/dht/"+k+"/"+v)
-					except requests.exceptions.RequestException as e:
-						print("DHT_Error:_'"+"http://"+v0+"/dht/"+k+"/"+v+"'")
-					return v0
+                    (k0,v0) = self.h[sk]
+                    try:
+                        if v0 != n:
+                             r = requests.put("http://"+v0+"/dht/"+n+"/"+v)
+                             print("DHT_OK:_'"+"http://"+v0+"/dht/"+n+"/"+v+"'")
+                        else:
+                             o=len(k)-2
+                             self.insert(k[0:o],v,n)
+                    except requests.exceptions.RequestException as e:
+                        print("DHT_Error:_'"+"http://"+v0+"/dht/"+n+"/"+v+"'")
+                    return v0
 					
     def lookup(self, k):
         print(list(subkeys(k)))
@@ -180,7 +186,7 @@ def dht_lookup(key):
 @put('/dht/<key>/<value>')
 def dht_insert(key, value):
     global dht
-    return json.dumps(dht.insert(hashFunc(key), value))
+    return json.dumps(dht.insert(hashFunc(key), value,key))
 	
 threading.Thread(target=clientServ).start()
 
