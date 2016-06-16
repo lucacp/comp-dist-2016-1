@@ -8,7 +8,7 @@ import hashlib
 
 servers = [("localhost:8080")]
 messages = [("Nobody", "Hello guys!", 0)]
-tempo = 0
+tempo = [("localhost:8080",0)]
 
 def subkeys(k):
     for i in range(len(k), 0, -1):
@@ -79,33 +79,33 @@ dht = DHT(hashFunc(str(sys.argv[1])+":"+str(sys.argv[2])))
 @view('index')
 def index():
     global tempo
-    return {'messages': messages,'nick': '','time':tempo}
+    return {'messages': messages,'nick': '','time':tempo[0][1]}
 
 @get('/<nick>')
 @view('index')
 def index(nick):
 	global tempo
-	return {'messages': messages,'nick': nick,'time':tempo}
+	return {'messages': messages,'nick': nick,'time':tempo[0][1]}
 
 @post('/send')
 def sendMessage():
 	global tempo
-	tempo+=1
+	tempo[0][1]+=1
 	m=request.forms.get('message')
-	n=request.forms.get('nick')	
-	messages.append([n, m, tempo])
+	n=request.forms.get('nick')
+	messages.append([n, m, tempo[0][1]])
 	redirect('/'+n)
 
 @get('/peers')
 def getPeers():
 	global servers
-	return json.dumps(servers)	
+	return json.dumps(servers)
 
 @get('/peers/add/<server>')
 def getPeers(server):
 	global servers
 	flag=None
-	if serrver not in servers:
+	if server not in servers:
 		if len(servers) < 6:
 			servers.append(server)
 			flag=True
@@ -130,6 +130,7 @@ def clientServ():
 		#print(ad)
 		for i in servers:
 			time.sleep(3)
+			r = None
 			if i != ad:
 				try:
 					requests.get("http://"+i+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
@@ -153,7 +154,6 @@ def clientMsg():
 		global tempo
 		for i in servers:
 			time.sleep(1)
-			flag = None
 			ad=str(sys.argv[1])+":"+str(sys.argv[2])
 			if i != ad:
 				try:
@@ -162,9 +162,11 @@ def clientMsg():
 					print("Connect_Error "+"http://"+i)
 					continue
 				au = json.loads(aux.content.decode("UTF-8"))
-				if au > tempo:
-					tempo = au
-					flag = True
+				for k in au:
+					for tem in tempo:
+						if k[0] == tem[0]:
+							if k[1] > tem[1]:
+								tem[1] = k[1]
 				try:
 					s = requests.get("http://"+i+'/peers/msg')
 				except requests.exceptions.RequestException as e:
