@@ -8,7 +8,7 @@ import hashlib
 
 servers = [("localhost:8080")]
 messages = [("Nobody", "Hello guys!", 0)]
-tempo = [(str(sys.argv[1])+":"+str(sys.argv[2]),0)]
+tempo = [("localhost:8080",0)]
 
 def subkeys(k):
     for i in range(len(k), 0, -1):
@@ -90,7 +90,7 @@ def index(nick):
 @post('/send')
 def sendMessage():
 	global tempo
-	tempo[0][1]+=1
+	tempo[0]=(tempo[0][0],tempo[0][1]+1)
 	m=request.forms.get('message')
 	n=request.forms.get('nick')
 	messages.append([n, m, tempo[0][1]])
@@ -104,10 +104,12 @@ def getPeers():
 @get('/peers/add/<server>')
 def getPeers(server):
 	global servers
+	global tempo
 	flag=None
 	if server not in servers:
 		if len(servers) < 6:
 			servers.append(server)
+			tempo.append((server,0))
 			flag=True
 	return json.dumps(flag)
 		
@@ -146,6 +148,7 @@ def clientServ():
 					if j not in servers:
 						if len(servers) < 6:
 							servers.append(j)
+							
 
 def clientMsg():
 	while True:
@@ -155,6 +158,8 @@ def clientMsg():
 		for i in servers:
 			time.sleep(1)
 			ad=str(sys.argv[1])+":"+str(sys.argv[2])
+			if ad != tempo[0][0]:
+				tempo.insert(0,(ad,tempo[0][1]))
 			if i != ad:
 				try:
 					aux = requests.get("http://"+i+'/peers/time')
@@ -164,19 +169,22 @@ def clientMsg():
 					continue
 				au = json.loads(aux.content.decode("UTF-8"))
 				ns = json.loads(s.content.decode("UTF-8"))
-# o novo post do mesmo será apenas colocado no final das msgs recebidas e sera feito uma varredura para ver se alguma msg está faltando				
-				for k in au:
-					for tem in tempo:
-						if k[0] == tem[0]:
-							if k[1] > tem[1]:
-								tem[1] = k[1]
-				for j in ns:
-					if j not in messages and j[2]!=0:
-						if flag:
-							messages.insert(j[2],j)
-						else:
-							messages.append(j)
-						print(j)
+				for tin in range(0,len(tempo)):
+					for tout in range(0,len(au)):
+						if tempo[tin][0] == au[tout][0]:
+							if tempo[tin][1] < au[tout][1]:
+								dif = au[tout][1]-tempo[tin][1]
+								tempo[tin] = au[tout]
+								if len(messages) < len(ns):
+									for j in range(len(messages),0):
+										if messages[j] == ns[j] and dif > 0:
+											for nov in range(j-1,len(ns)):
+												messages.append(ns[nov])
+												dif-=1
+				for m in ns:
+					print(m)
+				for nm in au:
+					print(nm)
 
 @get('/dht/<key>')
 def dht_lookup(key):
