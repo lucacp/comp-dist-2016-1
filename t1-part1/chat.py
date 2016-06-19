@@ -8,7 +8,7 @@ import hashlib
 
 servers = [("localhost:8080")]
 messages = [("Nobody", "Hello guys!", 0)]
-tempo = [("localhost:8080",0)]
+tempo = [(str(sys.argv[1])+":"+str(sys.argv[2]),0)]
 
 def subkeys(k):
     for i in range(len(k), 0, -1):
@@ -158,21 +158,18 @@ def clientMsg():
 			if i != ad:
 				try:
 					aux = requests.get("http://"+i+'/peers/time')
+					s = requests.get("http://"+i+'/peers/msg')
 				except requests.exceptions.RequestException as e:
 					print("Connect_Error "+"http://"+i)
 					continue
 				au = json.loads(aux.content.decode("UTF-8"))
+				ns = json.loads(s.content.decode("UTF-8"))
+# o novo post do mesmo será apenas colocado no final das msgs recebidas e sera feito uma varredura para ver se alguma msg está faltando				
 				for k in au:
 					for tem in tempo:
 						if k[0] == tem[0]:
 							if k[1] > tem[1]:
 								tem[1] = k[1]
-				try:
-					s = requests.get("http://"+i+'/peers/msg')
-				except requests.exceptions.RequestException as e:
-					print("Connect_Error "+"http://"+i)
-					continue
-				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
 					if j not in messages and j[2]!=0:
 						if flag:
