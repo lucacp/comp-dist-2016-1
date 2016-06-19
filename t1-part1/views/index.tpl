@@ -4,7 +4,7 @@
 
 <h1> T1.p1: Chat de texto </h1>
 <ul>
-%for (n, m, t) in messages:
+%for (s,n, m, t) in messages:
     <li> <b>{{n}}: </b> {{m}} </li>
 %end
 </ul>
@@ -14,6 +14,7 @@
     <p> Mensagem <input name="message" type="text" /> </p>
     <p> <input value="Enviar" type="submit" /> </p>
 		<input value="{{time}}" type="hidden" />
+		<input value="{{server}}" type="hidden" />
 </form>
 
 </body>

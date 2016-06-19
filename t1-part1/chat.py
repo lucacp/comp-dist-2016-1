@@ -6,8 +6,8 @@ import requests
 import sys
 import hashlib
 
-servers = [("localhost:8080")]
-messages = [("Nobody", "Hello guys!", 0)]
+servers = ["localhost:8080"]
+messages = [("0.0.0.0:80","Nobody", "Hello guys!", 0)]
 tempo = [("localhost:8080",0)]
 
 def subkeys(k):
@@ -79,13 +79,13 @@ dht = DHT(hashFunc(str(sys.argv[1])+":"+str(sys.argv[2])))
 @view('index')
 def index():
     global tempo
-    return {'messages': messages,'nick': '','time':tempo[0][1]}
+    return {'server': tempo[0][0],'messages': messages,'nick': '','time':tempo[0][1]}
 
 @get('/<nick>')
 @view('index')
 def index(nick):
 	global tempo
-	return {'messages': messages,'nick': nick,'time':tempo[0][1]}
+	return {'server': tempo[0][0],'messages': messages,'nick': nick,'time':tempo[0][1]}
 
 @post('/send')
 def sendMessage():
@@ -93,7 +93,7 @@ def sendMessage():
 	tempo[0]=(tempo[0][0],tempo[0][1]+1)
 	m=request.forms.get('message')
 	n=request.forms.get('nick')
-	messages.append([n, m, tempo[0][1]])
+	messages.append([tempo[0][0],n, m, tempo[0][1]])
 	redirect('/'+n)
 
 @get('/peers')
@@ -109,7 +109,7 @@ def getPeers(server):
 	if server not in servers:
 		if len(servers) < 6:
 			servers.append(server)
-			tempo.append((server,0))
+			tempo.append(server,0)
 			flag=True
 	return json.dumps(flag)
 		
@@ -173,17 +173,14 @@ def clientMsg():
 					for tout in range(0,len(au)):
 						if tempo[tin][0] == au[tout][0]:
 							if tempo[tin][1] < au[tout][1]:
-								dif = au[tout][1]-tempo[tin][1]
 								tempo[tin] = au[tout]
-								if len(messages) < len(ns):
-									for j in range(len(messages),0):
-										if messages[j] == ns[j] and dif > 0:
-											for nov in range(j-1,len(ns)):
-												messages.append(ns[nov])
-												dif-=1
-				for m in ns:
+								for j in range(len(messages)):
+									for j1 in ns:
+										if (messages[j][0] == j1[0] and messages[j][3]<j1[3]) or (j1[0] in servers and tempo[tin][1] == 1 and j1 not in messages):
+											messages.append(j1)
+				for m in messages:
 					print(m)
-				for nm in au:
+				for nm in tempo:
 					print(nm)
 
 @get('/dht/<key>')
