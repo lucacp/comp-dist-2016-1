@@ -8,12 +8,38 @@ import hashlib
 
 servers = ["localhost:8080"]
 messages = [("0.0.0.0:80","Nobody", "Hello guys!", 0)]
-tempo = [("localhost:8080",0)]
 
 def subkeys(k):
     for i in range(len(k), 0, -1):
         yield k[:i]
     yield ""
+
+class VecClock:
+	def __init__(self,k):
+		self.a = k
+		self.t = 0
+		self.p = {}
+	
+	def procuraT(self,k):
+		for i in range(self.p):
+			if k == self.p[i][0]:
+				return self.p[i][1]
+	def compara(self,k,t):
+		if self.procuraT(k) == t:
+			return True
+		return False
+	def addin(self,k,t):
+		for i in range(self.p):
+			if self.p[i][0] == k:
+				if self.p[i][1] < t:
+					self.p[i] = (k,t)
+					return True
+				return False
+		self.p.append(k,t)
+		return True
+	#def importa(self,v1):
+		
+tempo = VecClock(str(sys.argv[1])+":"+str(sys.argv[2]))
 
 class DHT:
     def __init__(self, k):
