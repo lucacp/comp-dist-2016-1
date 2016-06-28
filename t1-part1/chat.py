@@ -29,15 +29,24 @@ class VecClock:
 			return True
 		return False
 	def addin(self,k,t):
-		for i in range(self.p):
-			if self.p[i][0] == k:
-				if self.p[i][1] < t:
-					self.p[i] = (k,t)
-					return True
-				return False
-		self.p.append(k,t)
-		return True
-	#def importa(self,v1):
+		if k != self.a:	
+			for i in range(self.p):
+				if self.p[i][0] == k:
+					if self.p[i][1] < t:
+						self.p[i] = (k,t)
+						return True
+					return False
+			self.p.append(k,t)
+			return True
+		else:
+			
+	def atualiza(self,v1):
+		if compara(v1.a,v1.t):
+			return False
+		else:
+			return addin(v1.a,v1.t)
+	def getOthers(self):
+		return self.p
 		
 tempo = VecClock(str(sys.argv[1])+":"+str(sys.argv[2]))
 
@@ -63,8 +72,9 @@ class DHT:
                              r = requests.put("http://"+v0+"/dht/"+n+"/"+v)
                              print("DHT_OK:_'"+"http://"+v0+"/dht/"+n+"/"+v+"'")
                         else:
-                             o=len(k)-1
-                             self.insert(k[0:o],v,n)
+                             if len(k) > 2:
+                                 o=len(k)-1
+                                 self.insert(k[0:o],v,n)
                     except requests.exceptions.RequestException as e:
                         print("DHT_Error:_'"+"http://"+v0+"/dht/"+n+"/"+v+"'")
                         continue
@@ -105,21 +115,21 @@ dht = DHT(hashFunc(str(sys.argv[1])+":"+str(sys.argv[2])))
 @view('index')
 def index():
     global tempo
-    return {'server': tempo[0][0],'messages': messages,'nick': '','time':tempo[0][1]}
+    return {'server': tempo.a,'messages': messages,'nick': '','time':tempo.t}
 
 @get('/<nick>')
 @view('index')
 def index(nick):
 	global tempo
-	return {'server': tempo[0][0],'messages': messages,'nick': nick,'time':tempo[0][1]}
+	return {'server': tempo.a,'messages': messages,'nick': nick,'time':tempo.t}
 
 @post('/send')
 def sendMessage():
 	global tempo
-	tempo[0]=(tempo[0][0],tempo[0][1]+1)
+	tempo.t = tempo.t+1
 	m=request.forms.get('message')
 	n=request.forms.get('nick')
-	messages.append([tempo[0][0],n, m, tempo[0][1]])
+	messages.append([tempo.a,n, m, tempo.t])
 	redirect('/'+n)
 
 @get('/peers')
@@ -135,7 +145,7 @@ def getPeers(server):
 	if server not in servers:
 		if len(servers) < 6:
 			servers.append(server)
-			tempo.append(server,0)
+			tempo.addin(server,0)
 			flag=True
 	return json.dumps(flag)
 		
@@ -174,7 +184,13 @@ def clientServ():
 					if j not in servers:
 						if len(servers) < 6:
 							servers.append(j)
-							
+
+def getMsg(msg,a):
+	f=None
+	for i in range(len(msg)):
+		if msg[i][0] == a:
+			f.append(msg[i])
+	return f
 
 def clientMsg():
 	while True:
@@ -184,8 +200,6 @@ def clientMsg():
 		for i in servers:
 			time.sleep(1)
 			ad=str(sys.argv[1])+":"+str(sys.argv[2])
-			if ad != tempo[0][0]:
-				tempo.insert(0,(ad,tempo[0][1]))
 			if i != ad:
 				try:
 					aux = requests.get("http://"+i+'/peers/time')
@@ -195,18 +209,19 @@ def clientMsg():
 					continue
 				au = json.loads(aux.content.decode("UTF-8"))
 				ns = json.loads(s.content.decode("UTF-8"))
-				for tin in range(0,len(tempo)):
-					for tout in range(0,len(au)):
-						if tempo[tin][0] == au[tout][0]:
-							if tempo[tin][1] < au[tout][1]:
-								tempo[tin] = au[tout]
-								for j in range(len(messages)):
-									for j1 in ns:
-										if (messages[j][0] == j1[0] and messages[j][3]<j1[3]) or (j1[0] in servers and tempo[tin][1] == 1 and j1 not in messages):
-											messages.append(j1)
+				if atualiza(au):
+					msg=getMsg(ns,i)
+					flag = False
+					for j in range(len(msg)):
+						for k in range(len(messages)):
+							if messages[k][0] == msg[j][0] and messages[k][1] == msg[j][1] and messages[k][2] == msg[j][2] and messages[k][3] == msg[j][3]:
+								flag = True
+						if flag == False:
+							messages.append(msg[j])
+					
 				for m in messages:
 					print(m)
-				for nm in tempo:
+				for nm in tempo.p:
 					print(nm)
 
 @get('/dht/<key>')
