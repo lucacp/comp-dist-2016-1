@@ -15,40 +15,53 @@ def subkeys(k):
     yield ""
 
 class VecClock:
-	def __init__(self,k):
+	def __init__(self,k,t,p):
 		self.a = k
-		self.t = 0
-		self.p = {}
-	
+		self.t = t
+		self.p = None
+		if p == None:
+			self.p = [("localhost:8080",0)]
+		else:
+			self.p = []
+			for i in range(0,len(p)-1):
+				ad = (p[i],p[i+1])
+				i=i+2
+				self.p.append(ad)
+			
+	def __eq__(self, other):
+		return (self.procuraT(other.a) == other.t and len(self.p) == len(other.p))
 	def procuraT(self,k):
-		for i in range(self.p):
+		for i in range(len(self.p)):
 			if k == self.p[i][0]:
 				return self.p[i][1]
-	def compara(self,k,t):
-		if self.procuraT(k) == t:
-			return True
-		return False
+		return -1
 	def addin(self,k,t):
 		if k != self.a:	
-			for i in range(self.p):
+			for i in range(len(self.p)):
 				if self.p[i][0] == k:
 					if self.p[i][1] < t:
-						self.p[i] = (k,t)
+						self.p[i] = [k,t]
 						return True
 					return False
-			self.p.append(k,t)
+			ad=(k,t)
+			self.p.append(ad)
 			return True
 		else:
-			
-	def atualiza(self,v1):
-		if compara(v1.a,v1.t):
 			return False
+	def atualiza(self,a,t):
+		return self.addin(a,t)
+	def exportar(self):
+		ad = ([self.a,self.t])
+		if len(self.p) == 0:
+			ad.append(None)
 		else:
-			return addin(v1.a,v1.t)
-	def getOthers(self):
-		return self.p
+			pe = []
+			for i in self.p:
+				pe.append(i)
+			ad.append(pe)
+		return ad
 		
-tempo = VecClock(str(sys.argv[1])+":"+str(sys.argv[2]))
+tempo = VecClock(str(sys.argv[1])+":"+str(sys.argv[2]),0,None)
 
 class DHT:
     def __init__(self, k):
@@ -141,7 +154,7 @@ def getPeers():
 def getPeers(server):
 	global servers
 	global tempo
-	flag=None
+	flag=False
 	if server not in servers:
 		if len(servers) < 6:
 			servers.append(server)
@@ -157,7 +170,7 @@ def getMsg():
 @get('/peers/time')
 def getTime():
 	global tempo
-	return json.dumps(tempo)
+	return json.dumps(tempo.exportar())
 	
 def clientServ():
 	while True:
@@ -172,12 +185,9 @@ def clientServ():
 			if i != ad:
 				try:
 					requests.get("http://"+i+"/peers/add/"+str(sys.argv[1]+':'+sys.argv[2]))
-				except requests.exceptions.RequestException as e:
-					print("Connect_Error "+"http://"+i)
-				try:
 					s = requests.get("http://"+i+'/peers')
 				except requests.exceptions.RequestException as e:
-					print("Connect_Error "+"http://"+i)
+					print("Timeout: http://"+i)
 					continue
 				ns = json.loads(s.content.decode("UTF-8"))
 				for j in ns:
@@ -200,25 +210,27 @@ def clientMsg():
 		for i in servers:
 			time.sleep(1)
 			ad=str(sys.argv[1])+":"+str(sys.argv[2])
-			if i != ad:
+			if i != ad and not tempo.addin(i,0):
 				try:
 					aux = requests.get("http://"+i+'/peers/time')
 					s = requests.get("http://"+i+'/peers/msg')
 				except requests.exceptions.RequestException as e:
-					print("Connect_Error "+"http://"+i)
+					print("Timeout: http://"+i)
 					continue
 				au = json.loads(aux.content.decode("UTF-8"))
 				ns = json.loads(s.content.decode("UTF-8"))
-				if atualiza(au):
+				print(au)
+				ti=VecClock(au[0],au[1],au[2])	
+				if tempo.atualiza(ti.a,ti.t):
 					msg=getMsg(ns,i)
 					flag = False
 					for j in range(len(msg)):
 						for k in range(len(messages)):
-							if messages[k][0] == msg[j][0] and messages[k][1] == msg[j][1] and messages[k][2] == msg[j][2] and messages[k][3] == msg[j][3]:
+							if messages[k] == msg[j]:
 								flag = True
 						if flag == False:
 							messages.append(msg[j])
-					
+				
 				for m in messages:
 					print(m)
 				for nm in tempo.p:
