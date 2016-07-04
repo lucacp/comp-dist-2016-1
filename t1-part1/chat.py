@@ -77,7 +77,8 @@ class DHT:
             self.h[sk] = None
 
     def insert(self, k, v,n):
-        for sk in subkeys(k):
+        if len(k) > 1:
+          for sk in subkeys(k):
             print(sk)
             if sk in self.h:
                 if not self.h[sk]:
@@ -102,16 +103,19 @@ class DHT:
         print(list(subkeys(k)))
         f = []
         for sk in subkeys(k):
-            f.append(sk)
             print(sk)
             print(self.h)
             if sk in self.h:
                 if self.h[sk]:
                     (ki, vi) = self.h[sk]
-                    if ki == k:
+                    if ki == k and vi != None:
                         f.append(vi)
-                        return f
-        return None
+                        if len(k) > 2:
+                            o=len(k)-1
+                            f.append(self.lookup(k[0:o]))
+        if len(f)==0:
+            return None
+        return f
 
     def __repr__(self):
         return "<<DHT:"+ repr(self.h) +">>"
