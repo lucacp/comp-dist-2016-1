@@ -20,7 +20,11 @@ class VecClock:
 		self.t = t
 		self.p = None
 		if p == None:
-			self.p = [("localhost:8080",0)]
+			self.p = []
+			if str(sys.argv[1])+":"+str(sys.argv[2])!="localhost:8080":
+				self.p = [("localhost:8080",0)]
+			else:
+				self.p = [("localhost:8081",0)]
 		else:
 			self.p = []
 			for i in range(0,len(p)-1):
@@ -57,7 +61,8 @@ class VecClock:
 		else:
 			pe = []
 			for i in self.p:
-				pe.append(i)
+				if i != ad:
+					pe.append(i)
 			ad.append(pe)
 		return ad
 		
@@ -95,14 +100,17 @@ class DHT:
 					
     def lookup(self, k):
         print(list(subkeys(k)))
+        f = []
         for sk in subkeys(k):
+            f.append(sk)
             print(sk)
             print(self.h)
             if sk in self.h:
                 if self.h[sk]:
                     (ki, vi) = self.h[sk]
                     if ki == k:
-                        return vi
+                        f.append(vi)
+                        return f
         return None
 
     def __repr__(self):
@@ -195,12 +203,8 @@ def clientServ():
 						if len(servers) < 6:
 							servers.append(j)
 
-def getMsg(msg,a):
-	f=None
-	for i in range(len(msg)):
-		if msg[i][0] == a:
-			f.append(msg[i])
-	return f
+def comparaMsg(m,n):
+	return (m[0] == n[0] and m[1] == n[1] and m[2] == n[2] and m[3] == n[3])
 
 def clientMsg():
 	while True:
@@ -222,14 +226,14 @@ def clientMsg():
 				print(au)
 				ti=VecClock(au[0],au[1],au[2])	
 				if tempo.atualiza(ti.a,ti.t):
-					msg=getMsg(ns,i)
-					flag = False
-					for j in range(len(msg)):
+					for j in range(len(ns)):
+						flag = False
 						for k in range(len(messages)):
-							if messages[k] == msg[j]:
+							if comparaMsg(messages[k],ns[j]):
 								flag = True
+								print("TRUE"+str(k)+ns[j][2])
 						if flag == False:
-							messages.append(msg[j])
+							messages.append(ns[j])
 				
 				for m in messages:
 					print(m)
