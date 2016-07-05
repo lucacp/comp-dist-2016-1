@@ -72,7 +72,6 @@ class DHT:
     def __init__(self, k):
         self.k = k
         self.h = {}
-
         for sk in subkeys(self.k):
             self.h[sk] = None
 
@@ -88,17 +87,20 @@ class DHT:
                     (k0,v0) = self.h[sk]
                     try:
                         if v0 != n:
-                             r = requests.put("http://"+v0+"/dht/"+n+"/"+v)
-                             print("DHT_OK:_'"+"http://"+v0+"/dht/"+n+"/"+v+"'")
+                             if len(sk) > 2:
+                               r = requests.put("http://"+v0+"/dht/"+n+"/"+v)
+                               print("DHT_OK:_'"+"http://"+v0+"/dht/"+n+"/"+v+"'")
                         else:
-                             if len(k) > 2:
+                             if len(sk) > 2:
                                  o=len(k)-1
                                  self.insert(k[0:o],v,n)
                     except requests.exceptions.RequestException as e:
                         print("DHT_Error:_'"+"http://"+v0+"/dht/"+n+"/"+v+"'")
                         continue
                     return v0
-					
+          return None
+        else:
+           return None			
     def lookup(self, k):
         print(list(subkeys(k)))
         f = []
